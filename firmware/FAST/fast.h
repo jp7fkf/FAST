@@ -56,6 +56,9 @@ class Fast {
     String ssid;
     String password;
 
+    String www_username;
+    String www_password;
+
     bool is_static_ip;
     IPAddress local_ip;
     IPAddress gateway;

@@ -97,6 +97,9 @@ void Fast::reset(bool clean) {
   ssid = "";
   password = "";
 
+  www_username = "":
+  www_password = "":
+
   is_static_ip = false;
   local_ip = 0U;
   subnetmask = 0U;
@@ -168,6 +171,9 @@ bool Fast::restore() {
   is_stealth_ssid = (bool)root["is_stealth_ssid"];
   ssid = (const char*)root["ssid"];
   password = (const char*)root["password"];
+
+  www_username = "admin"; // (const char*)root["www_username"];
+  www_password = "admin"; // (const char*)root["www_password"];
 
   is_static_ip = (bool)root["is_static_ip"];
   local_ip = (const uint32_t)root["local_ip"];
@@ -364,6 +370,9 @@ void Fast::attachStationApi() {
 
   server.on("/indicator", [this]() {
     displayRequest();
+    if (!server.authenticate(www_username, www_password))
+      return server.requestAuthentication(BASIC_AUTH);
+
     DynamicJsonBuffer jsonBuffer;
     JsonObject& root = jsonBuffer.parseObject(server.arg("plain"));
     switch(server.method()){
@@ -406,6 +415,8 @@ void Fast::attachStationApi() {
 
   server.on("/beep", [this]() {
     displayRequest();
+    if (!server.authenticate(www_username, www_password))
+      return server.requestAuthentication(); // digest auth
     DynamicJsonBuffer jsonBuffer;
     JsonObject& root = jsonBuffer.parseObject(server.arg("plain"));
     switch(server.method()){
