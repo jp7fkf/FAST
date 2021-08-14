@@ -58,6 +58,7 @@ void Fast::begin(void) {
 
   if (!MDNS.begin(hostname.c_str())) println_dbg("Error setting up MDNS responder!");
   else println_dbg("mDNS: http://" + hostname + ".local");
+  MDNS.addService("http", "tcp", 80);
 
 #if USE_CAPTIVE_PORTAL == true
   println_dbg("Starting Captive Portal...");
@@ -97,7 +98,7 @@ void Fast::reset(bool clean) {
   ssid = "";
   password = "";
 
-  www_auth_method = DIGEST_AUTH;
+  www_auth_method = BASIC_AUTH;
   www_username = "";
   www_password = "";
 
@@ -107,7 +108,7 @@ void Fast::reset(bool clean) {
   gateway = 0U;
 
   save();
-  ESP.reset();
+  ESP.restart();
 }
 
 void Fast::handle() {
@@ -339,19 +340,25 @@ void Fast::attachSetupApi() {
     }
   });
   server.onNotFound([this]() {
-    println_dbg("Not Found");
-    server.send(404, "text/plain", "Not Found");
+    displayRequest();
+    println_dbg("Redirect");
+    server.sendHeader("Location", "http://" + (String)WiFi.softAPIP()[0] + "." + WiFi.softAPIP()[1] + "." + WiFi.softAPIP()[2] + "." + WiFi.softAPIP()[3], true);
+    server.send(302, "text/plain", "");
     println_dbg("End");
-//    displayRequest();
-//    println_dbg("Redirect");
-//    String res = "<script>location.href = \"http://" + (String)WiFi.softAPIP()[0] + "." + WiFi.softAPIP()[1] + "." + WiFi.softAPIP()[2] + "." + WiFi.softAPIP()[3] + "/\";</script>";
-//    server.send(200, "text/html", res);
-//    println_dbg("End");
   });
   server.serveStatic("/", SPIFFS, "/setup/");
 }
 
 void Fast::attachStationApi() {
+  server.on("/", [this]() {
+    displayRequest();
+    if (!authenticate())
+      return;
+    String res = "<script>location.href = \"./console/\";</script>";
+    server.send(200, "text/html", res);
+    println_dbg("End");
+  });
+
   server.on("/info", [this]() {
     displayRequest();
     if (!authenticate())
@@ -408,19 +415,19 @@ void Fast::attachStationApi() {
         }
         for (int i=0; i<ARRAY_LENGTH(HTTP_AUTH_METHOD_MAP); i++) {
           if (root["www_auth_method"] == HTTP_AUTH_METHOD_MAP[i])
-            www_auth_method = (HTTPAuthMethod)i; break;
+            www_auth_method = (HTTPAuthMethod)i;
         }
         www_username = (String)root["www_username"];
         www_password = (String)root["www_password"];
         save();
         server.send(200, "application/json", "{\"www_auth_method\":\"" + HTTP_AUTH_METHOD_MAP[www_auth_method] + "\"," +
-                                              "\"www_username\":\"" + String(www_username) + "\"," +
-                                              "\"www_password\":\"" + String(www_password) + "\"}");
+                                              "\"www_username\":\"" + www_username + "\"," +
+                                              "\"www_password\":\"" + www_password + "\"}");
         break;
       case HTTP_GET:
         server.send(200, "application/json", "{\"www_auth_method\":\"" + HTTP_AUTH_METHOD_MAP[www_auth_method] + "\"," +
-                                              "\"www_username\":\"" + String(www_username) + "\"," +
-                                              "\"www_password\":\"" + String(www_password) + "\"}");
+                                              "\"www_username\":\"" + www_username + "\"," +
+                                              "\"www_password\":\"" + www_password + "\"}");
         break;
       default:
         server.send(405, "text/plain", "Method Not Allowed");
@@ -491,8 +498,8 @@ void Fast::attachStationApi() {
             beepOff();
         }
         server.send(200, "application/json", "{\"isOn\":" + String(BOOL_STR(beep.getisOn())) + "," +
-                                            "\"repeat\":" + String(BOOL_STR(beep.getRepeat())) + "," +
-                                            "\"interval\":" + String(beep.getInterval()) + "}");
+                                              "\"repeat\":" + String(BOOL_STR(beep.getRepeat())) + "," +
+                                              "\"interval\":" + String(beep.getInterval()) + "}");
         break;
       case HTTP_GET:
         displayRequest();
@@ -511,10 +518,7 @@ void Fast::attachStationApi() {
     println_dbg("Not Found");
     server.send(404, "text/plain", "Not Found");
     println_dbg("End");
-//    String res = "<script>location.href = \"http://" + WiFi.localIP().toString() + "/\";</script>";
-//    server.send(200, "text/html", res);
-//    println_dbg("End");
   });
 
-  server.serveStatic("/", SPIFFS, "/main/", "public");
+  server.serveStatic("/console/", SPIFFS, "/main/");
 }
