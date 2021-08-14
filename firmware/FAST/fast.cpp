@@ -97,8 +97,9 @@ void Fast::reset(bool clean) {
   ssid = "";
   password = "";
 
-  www_username = "":
-  www_password = "":
+  www_auth_method = DIGEST_AUTH;
+  www_username = "";
+  www_password = "";
 
   is_static_ip = false;
   local_ip = 0U;
@@ -159,7 +160,8 @@ void Fast::indicatorOff() {
 bool Fast::restore() {
   yield();
   String s;
-  if (getStringFromFile(SETTINGS_JSON_PATH, s) == false) return false;
+  if (getStringFromFile(SETTINGS_JSON_PATH, s) == false)
+    return false;
   DynamicJsonBuffer jsonBuffer;
   JsonObject& root = jsonBuffer.parseObject(s);
   if (!root.success())return false;
@@ -172,8 +174,9 @@ bool Fast::restore() {
   ssid = (const char*)root["ssid"];
   password = (const char*)root["password"];
 
-  www_username = "admin"; // (const char*)root["www_username"];
-  www_password = "admin"; // (const char*)root["www_password"];
+  www_auth_method = (HTTPAuthMethod)(int)root["www_auth_method"];
+  www_username = (const char*)root["www_username"];
+  www_password = (const char*)root["www_password"];
 
   is_static_ip = (bool)root["is_static_ip"];
   local_ip = (const uint32_t)root["local_ip"];
@@ -200,6 +203,10 @@ bool Fast::save() {
   root["is_stealth_ssid"] = is_stealth_ssid;
   root["ssid"] = ssid;
   root["password"] = password;
+
+  root["www_auth_method"] = (int)www_auth_method;
+  root["www_username"] = www_username;
+  root["www_password"] = www_password;
 
   root["is_static_ip"] = is_static_ip;
   root["local_ip"] = (const uint32_t)local_ip;
@@ -238,6 +245,16 @@ void Fast::displayRequest() {
   for (uint8_t i = 0; i < server.args(); i++) {
     printf_dbg("\t%d = %d\n", server.argName(i).c_str(), server.arg(i).c_str());
   }
+}
+
+bool Fast::authenticate() {
+  if (www_username.length() > 0 && www_password.length() > 0) {
+    if (!server.authenticate(www_username.c_str(), www_password.c_str())) {
+      server.requestAuthentication(www_auth_method);
+      return false;
+    }
+  }
+  return true;
 }
 
 void Fast::attachSetupApi() {
@@ -307,6 +324,8 @@ void Fast::attachSetupApi() {
   });
   server.on("/dbg", [this]() {
     displayRequest();
+    if (!authenticate())
+      return;
     ssid = server.arg("ssid");
     password = server.arg("password");
     println_dbg("Target SSID : " + ssid);
@@ -335,6 +354,8 @@ void Fast::attachSetupApi() {
 void Fast::attachStationApi() {
   server.on("/info", [this]() {
     displayRequest();
+    if (!authenticate())
+      return;
     String res;
     if (getStringFromFile(SETTINGS_JSON_PATH, res)) {
       return server.send(200, "application/json", res);
@@ -345,6 +366,8 @@ void Fast::attachStationApi() {
 
   server.on("/wifi/disconnect", [this]() {
     displayRequest();
+    if (!authenticate())
+      return;
     server.send(200);
     delay(100);
     reset(false);
@@ -352,6 +375,8 @@ void Fast::attachStationApi() {
 
   server.on("/wifi/change-ip", [this]() {
     displayRequest();
+    if (!authenticate())
+      return;
     IPAddress _local_ip, _subnetmask, _gateway;
     if (!_local_ip.fromString(server.arg("local_ip")) || !_subnetmask.fromString(server.arg("subnetmask")) || !_gateway.fromString(server.arg("gateway"))) {
       return server.send(400, "text/palin", "Bad Request!");
@@ -368,62 +393,95 @@ void Fast::attachStationApi() {
     return server.send(200, "text/palin", "Changed IP Address to " + WiFi.localIP().toString());
   });
 
-  server.on("/indicator", [this]() {
+  server.on("/settings", [this]() {
     displayRequest();
-    if (!server.authenticate(www_username, www_password))
-      return server.requestAuthentication(BASIC_AUTH);
-
+    if (!authenticate())
+      return;
     DynamicJsonBuffer jsonBuffer;
     JsonObject& root = jsonBuffer.parseObject(server.arg("plain"));
     switch(server.method()){
       case HTTP_PUT:
-        indicatorOff();
         if (!root.success())
           return server.send(400, "text/plain", "Invalid Request");
+        if (root["www_auth_method"] != "digest" && root["www_auth_method"] != "basic") {
+          return server.send(400, "text/plain", "Invalid Request");
+        }
+        for (int i=0; i<ARRAY_LENGTH(HTTP_AUTH_METHOD_MAP); i++) {
+          if (root["www_auth_method"] == HTTP_AUTH_METHOD_MAP[i])
+            www_auth_method = (HTTPAuthMethod)i; break;
+        }
+        www_username = (String)root["www_username"];
+        www_password = (String)root["www_password"];
+        save();
+        server.send(200, "application/json", "{\"www_auth_method\":\"" + HTTP_AUTH_METHOD_MAP[www_auth_method] + "\"," +
+                                              "\"www_username\":\"" + String(www_username) + "\"," +
+                                              "\"www_password\":\"" + String(www_password) + "\"}");
+        break;
+      case HTTP_GET:
+        server.send(200, "application/json", "{\"www_auth_method\":\"" + HTTP_AUTH_METHOD_MAP[www_auth_method] + "\"," +
+                                              "\"www_username\":\"" + String(www_username) + "\"," +
+                                              "\"www_password\":\"" + String(www_password) + "\"}");
+        break;
+      default:
+        server.send(405, "text/plain", "Method Not Allowed");
+    }
+    println_dbg("End");
+  });
+
+  server.on("/indicator", [this]() {
+    displayRequest();
+    if (!authenticate())
+      return;
+    DynamicJsonBuffer jsonBuffer;
+    JsonObject& root = jsonBuffer.parseObject(server.arg("plain"));
+    switch(server.method()){
+      case HTTP_PUT:
+        if (!root.success())
+          return server.send(400, "text/plain", "Invalid Request");
+        indicatorOff();
         if (root["flash"] == true){
-          indicator.setFlash( root["red"],
-                              root["green"],
-                              root["blue"],
-                              root["interval"]);
+          indicator.setFlash(root["red"],
+                             root["green"],
+                             root["blue"],
+                             root["interval"]);
         }else{
-          indicator.setRgb( root["red"],
-                            root["green"],
-                            root["blue"]);
+          indicator.setRgb(root["red"],
+                           root["green"],
+                           root["blue"]);
         }
         server.send(200, "application/json", "{\"red\":" + String(indicator.getRed()) + "," +
-                                            "\"green\":" + String(indicator.getGreen()) + "," +
-                                            "\"blue\":" + String(indicator.getBlue()) + "," +
-                                            "\"interval\":" + String(indicator.getInterval()) + "," +
-                                            "\"isOn\":" + String(BOOL_STR(indicator.isOn())) + "," +
-                                            "\"flash\":" + String(BOOL_STR(indicator.getFlash())) + "}");
-        println_dbg("End");
+                                              "\"green\":" + String(indicator.getGreen()) + "," +
+                                              "\"blue\":" + String(indicator.getBlue()) + "," +
+                                              "\"interval\":" + String(indicator.getInterval()) + "," +
+                                              "\"isOn\":" + String(BOOL_STR(indicator.isOn())) + "," +
+                                              "\"flash\":" + String(BOOL_STR(indicator.getFlash())) + "}");
         break;
       case HTTP_GET:
         displayRequest();
-      server.send(200, "application/json", "{\"red\":" + String(indicator.getRed()) + "," +
-                                            "\"green\":" + String(indicator.getGreen()) + "," +
-                                            "\"blue\":" + String(indicator.getBlue()) + "," +
-                                            "\"interval\":" + String(indicator.getInterval()) + "," +
-                                            "\"isOn\":" + String(BOOL_STR(indicator.isOn())) + "," +
-                                            "\"flash\":" + String(BOOL_STR(indicator.getFlash())) + "}");
-        println_dbg("End");
+        server.send(200, "application/json", "{\"red\":" + String(indicator.getRed()) + "," +
+                                              "\"green\":" + String(indicator.getGreen()) + "," +
+                                              "\"blue\":" + String(indicator.getBlue()) + "," +
+                                              "\"interval\":" + String(indicator.getInterval()) + "," +
+                                              "\"isOn\":" + String(BOOL_STR(indicator.isOn())) + "," +
+                                              "\"flash\":" + String(BOOL_STR(indicator.getFlash())) + "}");
         break;
       default:
-        return server.send(405, "text/plain", "Method Not Allowed");
+        server.send(405, "text/plain", "Method Not Allowed");
     }
+    println_dbg("End");
   });
 
   server.on("/beep", [this]() {
     displayRequest();
-    if (!server.authenticate(www_username, www_password))
-      return server.requestAuthentication(); // digest auth
+    if (!authenticate())
+      return;
     DynamicJsonBuffer jsonBuffer;
     JsonObject& root = jsonBuffer.parseObject(server.arg("plain"));
     switch(server.method()){
       case HTTP_PUT:
-        beepOff();
         if (!root.success())
           return server.send(400, "text/plain", "Invalid Request");
+        beepOff();
         if (root["repeat"] == true){
           beep.setRepeat(root["interval"]);
         }else{
@@ -435,18 +493,17 @@ void Fast::attachStationApi() {
         server.send(200, "application/json", "{\"isOn\":" + String(BOOL_STR(beep.getisOn())) + "," +
                                             "\"repeat\":" + String(BOOL_STR(beep.getRepeat())) + "," +
                                             "\"interval\":" + String(beep.getInterval()) + "}");
-        println_dbg("End");
         break;
       case HTTP_GET:
         displayRequest();
       server.send(200, "application/json", "{\"isOn\":" + String(BOOL_STR(beep.getisOn())) + "," +
                                             "\"repeat\":" + String(BOOL_STR(beep.getRepeat())) + "," +
                                             "\"interval\":" + String(beep.getInterval()) + "}");
-        println_dbg("End");
         break;
       default:
-        return server.send(405, "text/plain", "Method Not Allowed");
+        server.send(405, "text/plain", "Method Not Allowed");
     }
+    println_dbg("End");
   });
 
   server.onNotFound([this]() {
