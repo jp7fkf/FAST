@@ -30,11 +30,14 @@
 
 #define STR(var)
 #define BOOL_STR(b) ((b) ? "true" :"false")
+#define ARRAY_LENGTH(array) (sizeof(array) / sizeof(array[0]))
 
 #define SETTINGS_JSON_PATH       ("/settings.json")
 
 const int DNS_PORT = 53;
 const int HTTP_PORT = 80;
+
+const String HTTP_AUTH_METHOD_MAP[] = {"basic", "digest"}; // map for enum HEEPAuthMethod{0: BASIC_AUTH, 1: DIGEST_AUTH}, ESP82666WebServer
 
 class Fast {
   public:
@@ -56,6 +59,10 @@ class Fast {
     String ssid;
     String password;
 
+    HTTPAuthMethod www_auth_method;
+    String www_username;
+    String www_password;
+
     bool is_static_ip;
     IPAddress local_ip;
     IPAddress gateway;
@@ -72,6 +79,8 @@ class Fast {
     bool save();
 
     void displayRequest();
+    bool authenticate();
+
     void attachSetupApi();
     void attachStationApi();
 };

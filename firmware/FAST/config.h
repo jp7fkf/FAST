@@ -12,7 +12,7 @@
 #define __CONFIG_H__
 
 /* Version */
-#define FAST_VERSION      "v0.9.0"
+#define FAST_VERSION      "v0.9.1"
 
 /* Hardware Mapping */
 #define PIN_BUTTON              (0)
