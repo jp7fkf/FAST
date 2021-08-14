@@ -81,7 +81,7 @@ void Fast::begin(void) {
   SSDP.setSerialNumber(String(ESP.getChipId() , HEX));
   SSDP.setURL("index.htm");
   SSDP.setModelName("FAST");
-  SSDP.setModelNumber("v1.0.0");
+  SSDP.setModelNumber(FAST_VERSION);
   SSDP.setModelURL("https://github.com/jp7fkf/FAST");
   SSDP.setManufacturer("JP7FKF");
   SSDP.setManufacturerURL("https://jp7fkf.dev/");
