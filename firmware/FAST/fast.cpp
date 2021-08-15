@@ -20,7 +20,8 @@ void Fast::begin(void) {
   yield();
   wdt_reset();
   indicator.setFlash(0, 0, 1023, 500);
-  if (restore() == false) reset();
+  if (!restore())
+     reset();
 
 #if USE_OTA_UPDATE == true
   ota.begin(hostname);
@@ -44,7 +45,6 @@ void Fast::begin(void) {
       }
       attachStationApi();
       ntp_begin();
-      indicator.off();
       break;
     case MODE_AP:
       println_dbg("Boot Mode: Access Point");
@@ -52,7 +52,6 @@ void Fast::begin(void) {
       setupAP(SOFTAP_SSID, SOFTAP_PASS);
       attachStationApi();
       save();
-      indicator.off();
       break;
   }
 
@@ -87,9 +86,11 @@ void Fast::begin(void) {
   SSDP.setManufacturer("JP7FKF");
   SSDP.setManufacturerURL("https://jp7fkf.dev/");
   SSDP.begin();
+
+  indicator.off();
 }
 
-void Fast::reset(bool clean) {
+void Fast::reset() {
   version = FAST_VERSION;
   mode = MODE_SETUP;
   hostname = HOSTNAME_DEFAULT;
@@ -130,14 +131,14 @@ void Fast::handle() {
           WiFi.mode(WIFI_AP_STA);
           delay(1000);
           setupAP(SOFTAP_SSID, SOFTAP_PASS);
-          indicator.setRed(1023);
+          indicator.setRgb(1023, 0, 0);
         }
         lost = true;
       } else {
         if (lost == true) {
           println_dbg("Found WiFi: " + ssid);
           WiFi.mode(WIFI_STA);
-          indicator.setBlue(1023);
+          indicator.off();
         }
         lost = false;
       }
@@ -284,7 +285,6 @@ void Fast::attachSetupApi() {
       subnetmask = WiFi.subnetMask();
       gateway = WiFi.gatewayIP();
       save();
-      indicator.setBlue(1023);
       delay(1000);
       ESP.reset();
     } else {
@@ -308,11 +308,10 @@ void Fast::attachSetupApi() {
     println_dbg(password);
     print_dbg("Stealth: ");
     println_dbg(is_stealth_ssid ? "true" : "false");
-    indicator.setGreen(1023);
-    server.send(200);
+    server.send(200, "text / plain", "Attempting to set up as Station Mode");
     WiFi.disconnect();
-    //    delay(1000);
     WiFi.begin(ssid.c_str(), password.c_str());
+    println_dbg("End");
   });
   server.on("/mode/accesspoint", [this]() {
     displayRequest();
@@ -331,7 +330,6 @@ void Fast::attachSetupApi() {
     password = server.arg("password");
     println_dbg("Target SSID : " + ssid);
     println_dbg("Target Password : " + password);
-    indicator.setGreen(1023);
     if (connectWifi(ssid.c_str(), password.c_str())) {
       String res = (String)WiFi.localIP()[0] + "." + WiFi.localIP()[1] + "." + WiFi.localIP()[2] + "." + WiFi.localIP()[3];
       server.send(200, "text/plain", res);
@@ -377,7 +375,7 @@ void Fast::attachStationApi() {
       return;
     server.send(200);
     delay(100);
-    reset(false);
+    reset();
   });
 
   server.on("/wifi/change-ip", [this]() {

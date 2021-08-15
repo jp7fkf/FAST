@@ -30,9 +30,8 @@ void IRAM_ATTR RESET() {
 }
 
 void IRAM_ATTR OFF() {
-  if (millis()-t < 500 && millis()-t > 0){
+  if (millis()-t < 500 && millis()-t > 0)
     fast.indicatorOff();
-  }
   fast.beepOff();
   t=millis();
 }
@@ -56,5 +55,6 @@ void setup() {
 
 void loop() {
   fast.handle();
-  if (reset_flag) fast.reset();
+  if (reset_flag)
+    fast.reset();
 }

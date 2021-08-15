@@ -30,6 +30,9 @@
 // WiFi connection Timeout
 #define WIFI_CONNECT_TIMEOUT    (10) // seconds
 
+// WiFi auto recooect
+#define WIFI_AUTO_RECONNECT     true
+
 // http://HOSTNAME_DEFAULT.local
 #define HOSTNAME_DEFAULT        "fast"
 
