@@ -53,6 +53,7 @@ bool connectWifi(String ssid, String password, bool stealth) {
   println_dbg("");
   print_dbg("Connecting to SSID: ");
   println_dbg(ssid);
+  WiFi.setAutoReconnect(WIFI_AUTO_RECONNECT);
   WiFi.begin(ssid.c_str(), password.c_str());
 
   // Wait for connection

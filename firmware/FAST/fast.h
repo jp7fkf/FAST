@@ -32,7 +32,7 @@
 #define BOOL_STR(b) ((b) ? "true" :"false")
 #define ARRAY_LENGTH(array) (sizeof(array) / sizeof(array[0]))
 
-#define SETTINGS_JSON_PATH       ("/settings.json")
+#define SETTINGS_JSON_PATH ("/settings.json")
 
 const int DNS_PORT = 53;
 const int HTTP_PORT = 80;
@@ -45,7 +45,7 @@ class Fast {
       beep(pin_beep), indicator(pin_red, pin_green, pin_blue), server(HTTP_PORT), httpUpdater(true) {
     }
     void begin();
-    void reset(bool clean = true);
+    void reset();
     void handle();
     void beepOff();
     void indicatorOff();
