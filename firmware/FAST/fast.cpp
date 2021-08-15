@@ -33,6 +33,7 @@ void Fast::begin(void) {
       WiFi.mode(WIFI_AP_STA);
       setupAP(SOFTAP_SSID, SOFTAP_PASS);
       attachSetupApi();
+      indicator.setFlash(0, 1023, 1023, 500);
       break;
     case MODE_STATION:
       println_dbg("Boot Mode: Station");
@@ -45,6 +46,7 @@ void Fast::begin(void) {
       }
       attachStationApi();
       ntp_begin();
+      indicator.off();
       break;
     case MODE_AP:
       println_dbg("Boot Mode: Access Point");
@@ -52,6 +54,7 @@ void Fast::begin(void) {
       setupAP(SOFTAP_SSID, SOFTAP_PASS);
       attachStationApi();
       save();
+      indicator.off();
       break;
   }
 
@@ -86,8 +89,6 @@ void Fast::begin(void) {
   SSDP.setManufacturer("JP7FKF");
   SSDP.setManufacturerURL("https://jp7fkf.dev/");
   SSDP.begin();
-
-  indicator.off();
 }
 
 void Fast::reset() {
@@ -118,7 +119,7 @@ void Fast::handle() {
   switch (mode) {
     case MODE_SETUP:
       if ((WiFi.status() == WL_CONNECTED))
-        indicator.setRgb(0, 1023, 1023);
+        indicator.setRgb(0, 1023, 0);
 #if USE_CAPTIVE_PORTAL == true
       dnsServer.processNextRequest();
 #endif
