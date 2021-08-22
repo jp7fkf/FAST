@@ -116,6 +116,7 @@ void Fast::reset() {
 }
 
 void Fast::handle() {
+  yield();
   server.handleClient();
   ota.handle();
   switch (mode) {
