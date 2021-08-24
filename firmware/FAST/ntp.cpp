@@ -35,7 +35,7 @@ void ntp_begin() {
   time_t n = now();
   time_t t = localtime(n, 9);
   sprintf(s, format, year(t), month(t), day(t), hour(t), minute(t), second(t));
-  print_dbg("JST : ");
+  print_dbg("JST: ");
   println_dbg(s);
 }
 
@@ -67,7 +67,7 @@ time_t getNtpTime() {
       return secsSince1900 - 2208988800UL;
     }
   }
-  println_dbg("No NTP Response :-(");
+  println_dbg("No NTP Response");
   return 0; // return 0 if unable to get the time
 }
 

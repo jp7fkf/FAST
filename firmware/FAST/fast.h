@@ -17,8 +17,6 @@
 #include <ESP8266SSDP.h>
 #include <ESP8266mDNS.h>
 #include <DNSServer.h>
-#undef max(a,b)
-#include <vector>
 #include "config.h"
 #include "indicator.h"
 #include "beep.h"
@@ -41,8 +39,8 @@ const String HTTP_AUTH_METHOD_MAP[] = {"basic", "digest"}; // map for enum HEEPA
 
 class Fast {
   public:
-    Fast(int pin_beep, int pin_red, int pin_green, int pin_blue):
-      beep(pin_beep), indicator(pin_red, pin_green, pin_blue), server(HTTP_PORT), httpUpdater(true) {
+    Fast(int pin_red, int pin_green, int pin_blue, int pin_beep):
+      indicator(pin_red, pin_green, pin_blue), beep(pin_beep), server(HTTP_PORT), httpUpdater(true) {
     }
     void begin();
     void reset();
