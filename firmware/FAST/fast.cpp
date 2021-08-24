@@ -163,6 +163,7 @@ void Fast::indicatorOff() {
 }
 
 bool Fast::restore() {
+  wdt_reset();
   yield();
   String s;
   if (getStringFromFile(SETTINGS_JSON_PATH, s) == false)
@@ -197,6 +198,7 @@ bool Fast::restore() {
 }
 
 bool Fast::save() {
+  wdt_reset();
   yield();
   DynamicJsonBuffer jsonBuffer;
   JsonObject& root = jsonBuffer.createObject();
@@ -218,26 +220,13 @@ bool Fast::save() {
   root["subnetmask"] = (const uint32_t)subnetmask;
   root["gateway"] = (const uint32_t)gateway;
 
-  String path = SETTINGS_JSON_PATH;
-  SPIFFS.remove(path);
-  File file = SPIFFS.open(path, "w");
-  if (!file) {
-    print_dbg("File open Error: ");
-    println_dbg(path);
-    return false;
-  }
-  root.printTo(file);
-  print_dbg("File Size: ");
-  println_dbg(file.size(), DEC);
-  file.close();
-  print_dbg("Backup successful: ");
-  println_dbg(path);
-  print_dbg("data: ");
-  root.printTo(DEBUG_SERIAL_STREAM);
-  return true;
+  String jsondata;
+  root.printTo(jsondata);
+  return writeStringToFile(SETTINGS_JSON_PATH, jsondata);
 }
 
 void Fast::displayRequest() {
+  wdt_reset();
   yield();
   println_dbg("");
   println_dbg("New Request");
@@ -282,7 +271,7 @@ void Fast::attachSetupApi() {
     displayRequest();
     if (WiFi.status() == WL_CONNECTED) {
       String res = (String)WiFi.localIP()[0] + "." + WiFi.localIP()[1] + "." + WiFi.localIP()[2] + "." + WiFi.localIP()[3];
-      server.send(200, "text/palin", res);
+      server.send(200, "text/plain", res);
       mode = MODE_STATION;
       local_ip = WiFi.localIP();
       subnetmask = WiFi.subnetMask();
@@ -390,18 +379,18 @@ void Fast::attachStationApi() {
       return;
     IPAddress _local_ip, _subnetmask, _gateway;
     if (!_local_ip.fromString(server.arg("local_ip")) || !_subnetmask.fromString(server.arg("subnetmask")) || !_gateway.fromString(server.arg("gateway"))) {
-      return server.send(400, "text/palin", "Bad Request!");
+      return server.send(400, "text/plain", "Invalid Request");
     }
     WiFi.config(_local_ip, _gateway, _subnetmask);
     if (WiFi.localIP() != _local_ip) {
-      return server.send(500, "text/palin", "Couldn't change IP Address :(");
+      return server.send(500, "text/plain", "Couldn't change IP Address.");
     }
     is_static_ip = true;
     local_ip = _local_ip;
     subnetmask = _subnetmask;
     gateway = _gateway;
     save();
-    return server.send(200, "text/palin", "Changed IP Address to " + WiFi.localIP().toString());
+    return server.send(200, "text/plain", "Changed IP Address to " + WiFi.localIP().toString());
   });
 
   server.on("/settings", [this]() {

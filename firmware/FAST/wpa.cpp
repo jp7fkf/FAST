@@ -19,9 +19,9 @@ extern "C" int pbkdf2_sha1(
 );
 
 String calcWPAPassPhrase(const String &ssid, const String &password) {
-  const int s = 32; // 256 bit
+  const int s = 32; // 256 bits
   u8 buf[s];
-  pbkdf2_sha1(password.c_str(), ssid.c_str(), 11, 4096, buf, s);
+  pbkdf2_sha1(password.c_str(), ssid.c_str(), ssid.length(), 4096, buf, s);
   String hash;
   for(int i=0; i<s; ++i)
     hash += String(buf[i] >> 4, HEX) + String(buf[i] & 0x0f, HEX);
