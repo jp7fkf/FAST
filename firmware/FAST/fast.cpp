@@ -133,7 +133,7 @@ void Fast::handle() {
           delay(1000);
           setupAP(SOFTAP_SSID, SOFTAP_PASS);
           indicator.setRgb(1023, 0, 0);
-          beepOff()
+          beepOff();
         }
         lost = true;
       } else {
