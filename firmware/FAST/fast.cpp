@@ -15,17 +15,14 @@
 #include "file.h"
 #include "wifi.h"
 #include "ntp.h"
+#include "wpa.h"
 
-void Fast::begin(void) {
+void Fast::begin() {
   yield();
   wdt_reset();
   indicator.setFlash(0, 0, 1023, 500);
   if (!restore())
      reset();
-
-#if USE_OTA_UPDATE == true
-  ota.begin(hostname);
-#endif
 
   switch (mode) {
     case MODE_SETUP:
@@ -65,6 +62,10 @@ void Fast::begin(void) {
 #if USE_CAPTIVE_PORTAL == true
   println_dbg("Starting Captive Portal...");
   dnsServer.start(DNS_PORT, "*", WiFi.softAPIP());
+#endif
+
+#if USE_OTA_UPDATE == true
+  ota.begin(hostname);
 #endif
 
   println_dbg("Starting HTTP Updater...");
@@ -312,6 +313,9 @@ void Fast::attachSetupApi() {
     println_dbg(is_stealth_ssid ? "true" : "false");
     server.send(200, "text / plain", "Attempting to set up as Station Mode");
     WiFi.disconnect();
+    password = calcWPAPassPhrase(ssid, password);
+    print_dbg("WPA Passphrase: ");
+    println_dbg(password);
     WiFi.begin(ssid.c_str(), password.c_str());
     println_dbg("End");
   });
