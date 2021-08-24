@@ -11,7 +11,7 @@
 #include "fast.h"
 
 #include <ArduinoJson.h>
-#include <FS.h>
+#include <LittleFS.h>
 #include "file.h"
 #include "wifi.h"
 #include "ntp.h"
@@ -237,7 +237,7 @@ void Fast::displayRequest() {
   print_dbg("Arguments count: ");
   println_dbg(server.args(), DEC);
   for (uint8_t i = 0; i < server.args(); i++) {
-    printf_dbg("\t%d = %d\n", server.argName(i).c_str(), server.arg(i).c_str());
+    printf_dbg("\t%s = %s\r\n", server.argName(i).c_str(), server.arg(i).c_str());
   }
 }
 
@@ -339,7 +339,7 @@ void Fast::attachSetupApi() {
     server.send(302, "text/plain", "");
     println_dbg("End");
   });
-  server.serveStatic("/", SPIFFS, "/setup/");
+  server.serveStatic("/", LittleFS, "/setup/");
 }
 
 void Fast::attachStationApi() {
@@ -406,7 +406,7 @@ void Fast::attachStationApi() {
         if (root["www_auth_method"] != "digest" && root["www_auth_method"] != "basic") {
           return server.send(400, "text/plain", "Invalid Request");
         }
-        for (int i=0; i<ARRAY_LENGTH(HTTP_AUTH_METHOD_MAP); i++) {
+        for (size_t i=0; i<ARRAY_LENGTH(HTTP_AUTH_METHOD_MAP); i++) {
           if (root["www_auth_method"] == HTTP_AUTH_METHOD_MAP[i])
             www_auth_method = (HTTPAuthMethod)i;
         }
@@ -496,9 +496,9 @@ void Fast::attachStationApi() {
         break;
       case HTTP_GET:
         displayRequest();
-      server.send(200, "application/json", "{\"isOn\":" + String(BOOL_STR(beep.getisOn())) + "," +
-                                            "\"repeat\":" + String(BOOL_STR(beep.getRepeat())) + "," +
-                                            "\"interval\":" + String(beep.getInterval()) + "}");
+        server.send(200, "application/json", "{\"isOn\":" + String(BOOL_STR(beep.getisOn())) + "," +
+                                              "\"repeat\":" + String(BOOL_STR(beep.getRepeat())) + "," +
+                                              "\"interval\":" + String(beep.getInterval()) + "}");
         break;
       default:
         server.send(405, "text/plain", "Method Not Allowed");
@@ -513,5 +513,5 @@ void Fast::attachStationApi() {
     println_dbg("End");
   });
 
-  server.serveStatic("/console/", SPIFFS, "/main/");
+  server.serveStatic("/console/", LittleFS, "/main/");
 }

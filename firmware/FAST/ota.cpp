@@ -11,7 +11,6 @@
 
 #include <WiFiUdp.h>
 #include <ArduinoOTA.h>
-#include <FS.h>
 #include "config.h" // for print_dbg()
 
 void OTA::begin(String hostname, String password, int port) {
@@ -27,14 +26,7 @@ void OTA::begin(String hostname, String password, int port) {
   ArduinoOTA.setPassword(password.c_str());
 
   ArduinoOTA.onStart([]() {
-    String type;
-    if (ArduinoOTA.getCommand() == U_FLASH){
-      type = "sketch";
-    }else{ // U_SPIFFS
-      type = "filesystem";
-      SPIFFS.end();
-    }
-    println_dbg("OTA Start. type:" + type);
+    println_dbg("OTA Start");
   });
   ArduinoOTA.onEnd([]() {
     println_dbg("OTA End");

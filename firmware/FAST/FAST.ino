@@ -17,11 +17,11 @@
 */
 
 #include <ESP8266WiFi.h>
-#include <FS.h>
+#include <LittleFS.h>
 #include "config.h"
 #include "fast.h"
 
-Fast fast(PIN_BEEP, PIN_LED_R, PIN_LED_G, PIN_LED_B);
+Fast fast(PIN_LED_R, PIN_LED_G, PIN_LED_B, PIN_BEEP);
 volatile bool reset_flag = false;
 unsigned int t=0;
 
@@ -42,7 +42,7 @@ void setup() {
   println_dbg("");
   println_dbg("Hello, I'm ESP-WROOM-02");
 
-  SPIFFS.begin();
+  LittleFS.begin();
 
   fast.begin();
   pinMode(PIN_BUTTON, INPUT_PULLUP);
