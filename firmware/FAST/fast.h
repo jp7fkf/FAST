@@ -17,7 +17,6 @@
 #include <ESP8266SSDP.h>
 #include <ESP8266mDNS.h>
 #include <DNSServer.h>
-#include <vector>
 #include "config.h"
 #include "indicator.h"
 #include "beep.h"
