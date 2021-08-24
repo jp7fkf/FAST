@@ -21,6 +21,7 @@ void Fast::begin() {
   yield();
   wdt_reset();
   indicator.setFlash(0, 0, 1023, 500);
+  LittleFS.begin();
   if (!restore())
      reset();
 

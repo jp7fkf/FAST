@@ -17,7 +17,6 @@
 */
 
 #include <ESP8266WiFi.h>
-#include <LittleFS.h>
 #include "config.h"
 #include "fast.h"
 
@@ -41,8 +40,6 @@ void setup() {
   delay(10);
   println_dbg("");
   println_dbg("Hello, I'm ESP-WROOM-02");
-
-  LittleFS.begin();
 
   fast.begin();
   pinMode(PIN_BUTTON, INPUT_PULLUP);
