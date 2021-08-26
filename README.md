@@ -9,3 +9,9 @@
 ```
 
 Opensource signal tower using ESP8266 WiFi-module.
+
+# Build and Upload with PlatformIO
+```
+platformio run
+platformio run --target uploadfs
+```

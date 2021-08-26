@@ -12,7 +12,7 @@
 #define __CONFIG_H__
 
 /* Version */
-#define FAST_VERSION      "v0.9.1"
+#define FAST_VERSION      "v0.9.2"
 
 /* Hardware Mapping */
 #define PIN_BUTTON              (0)
@@ -29,6 +29,9 @@
 
 // WiFi connection Timeout
 #define WIFI_CONNECT_TIMEOUT    (10) // seconds
+
+// WiFi auto recooect
+#define WIFI_AUTO_RECONNECT     true
 
 // http://HOSTNAME_DEFAULT.local
 #define HOSTNAME_DEFAULT        "fast"

@@ -11,20 +11,19 @@
 #include "fast.h"
 
 #include <ArduinoJson.h>
-#include <FS.h>
+#include <LittleFS.h>
 #include "file.h"
 #include "wifi.h"
 #include "ntp.h"
+#include "wpa.h"
 
-void Fast::begin(void) {
+void Fast::begin() {
   yield();
   wdt_reset();
   indicator.setFlash(0, 0, 1023, 500);
-  if (restore() == false) reset();
-
-#if USE_OTA_UPDATE == true
-  ota.begin(hostname);
-#endif
+  LittleFS.begin();
+  if (!restore())
+     reset();
 
   switch (mode) {
     case MODE_SETUP:
@@ -32,6 +31,7 @@ void Fast::begin(void) {
       WiFi.mode(WIFI_AP_STA);
       setupAP(SOFTAP_SSID, SOFTAP_PASS);
       attachSetupApi();
+      indicator.setFlash(0, 1023, 1023, 500);
       break;
     case MODE_STATION:
       println_dbg("Boot Mode: Station");
@@ -65,6 +65,10 @@ void Fast::begin(void) {
   dnsServer.start(DNS_PORT, "*", WiFi.softAPIP());
 #endif
 
+#if USE_OTA_UPDATE == true
+  ota.begin(hostname);
+#endif
+
   println_dbg("Starting HTTP Updater...");
   httpUpdater.setup(&server, "/firmware");
   server.on("/description.xml", HTTP_GET, [this]() {
@@ -89,7 +93,7 @@ void Fast::begin(void) {
   SSDP.begin();
 }
 
-void Fast::reset(bool clean) {
+void Fast::reset() {
   version = FAST_VERSION;
   mode = MODE_SETUP;
   hostname = HOSTNAME_DEFAULT;
@@ -117,7 +121,7 @@ void Fast::handle() {
   switch (mode) {
     case MODE_SETUP:
       if ((WiFi.status() == WL_CONNECTED))
-        indicator.setRgb(0, 1023, 1023);
+        indicator.setRgb(0, 1023, 0);
 #if USE_CAPTIVE_PORTAL == true
       dnsServer.processNextRequest();
 #endif
@@ -130,14 +134,15 @@ void Fast::handle() {
           WiFi.mode(WIFI_AP_STA);
           delay(1000);
           setupAP(SOFTAP_SSID, SOFTAP_PASS);
-          indicator.setRed(1023);
+          indicator.setRgb(1023, 0, 0);
+          beepOff();
         }
         lost = true;
       } else {
         if (lost == true) {
           println_dbg("Found WiFi: " + ssid);
           WiFi.mode(WIFI_STA);
-          indicator.setBlue(1023);
+          indicator.off();
         }
         lost = false;
       }
@@ -159,6 +164,7 @@ void Fast::indicatorOff() {
 }
 
 bool Fast::restore() {
+  wdt_reset();
   yield();
   String s;
   if (getStringFromFile(SETTINGS_JSON_PATH, s) == false)
@@ -193,6 +199,7 @@ bool Fast::restore() {
 }
 
 bool Fast::save() {
+  wdt_reset();
   yield();
   DynamicJsonBuffer jsonBuffer;
   JsonObject& root = jsonBuffer.createObject();
@@ -214,26 +221,13 @@ bool Fast::save() {
   root["subnetmask"] = (const uint32_t)subnetmask;
   root["gateway"] = (const uint32_t)gateway;
 
-  String path = SETTINGS_JSON_PATH;
-  SPIFFS.remove(path);
-  File file = SPIFFS.open(path, "w");
-  if (!file) {
-    print_dbg("File open Error: ");
-    println_dbg(path);
-    return false;
-  }
-  root.printTo(file);
-  print_dbg("File Size: ");
-  println_dbg(file.size(), DEC);
-  file.close();
-  print_dbg("Backup successful: ");
-  println_dbg(path);
-  print_dbg("data: ");
-  root.printTo(DEBUG_SERIAL_STREAM);
-  return true;
+  String jsondata;
+  root.printTo(jsondata);
+  return writeStringToFile(SETTINGS_JSON_PATH, jsondata);
 }
 
 void Fast::displayRequest() {
+  wdt_reset();
   yield();
   println_dbg("");
   println_dbg("New Request");
@@ -244,7 +238,7 @@ void Fast::displayRequest() {
   print_dbg("Arguments count: ");
   println_dbg(server.args(), DEC);
   for (uint8_t i = 0; i < server.args(); i++) {
-    printf_dbg("\t%d = %d\n", server.argName(i).c_str(), server.arg(i).c_str());
+    printf_dbg("\t%s = %s\r\n", server.argName(i).c_str(), server.arg(i).c_str());
   }
 }
 
@@ -278,13 +272,12 @@ void Fast::attachSetupApi() {
     displayRequest();
     if (WiFi.status() == WL_CONNECTED) {
       String res = (String)WiFi.localIP()[0] + "." + WiFi.localIP()[1] + "." + WiFi.localIP()[2] + "." + WiFi.localIP()[3];
-      server.send(200, "text/palin", res);
+      server.send(200, "text/plain", res);
       mode = MODE_STATION;
       local_ip = WiFi.localIP();
       subnetmask = WiFi.subnetMask();
       gateway = WiFi.gatewayIP();
       save();
-      indicator.setBlue(1023);
       delay(1000);
       ESP.reset();
     } else {
@@ -308,11 +301,13 @@ void Fast::attachSetupApi() {
     println_dbg(password);
     print_dbg("Stealth: ");
     println_dbg(is_stealth_ssid ? "true" : "false");
-    indicator.setGreen(1023);
-    server.send(200);
+    server.send(200, "text / plain", "Attempting to set up as Station Mode");
     WiFi.disconnect();
-    //    delay(1000);
+    password = calcWPAPassPhrase(ssid, password);
+    print_dbg("WPA Passphrase: ");
+    println_dbg(password);
     WiFi.begin(ssid.c_str(), password.c_str());
+    println_dbg("End");
   });
   server.on("/mode/accesspoint", [this]() {
     displayRequest();
@@ -331,7 +326,6 @@ void Fast::attachSetupApi() {
     password = server.arg("password");
     println_dbg("Target SSID : " + ssid);
     println_dbg("Target Password : " + password);
-    indicator.setGreen(1023);
     if (connectWifi(ssid.c_str(), password.c_str())) {
       String res = (String)WiFi.localIP()[0] + "." + WiFi.localIP()[1] + "." + WiFi.localIP()[2] + "." + WiFi.localIP()[3];
       server.send(200, "text/plain", res);
@@ -346,7 +340,7 @@ void Fast::attachSetupApi() {
     server.send(302, "text/plain", "");
     println_dbg("End");
   });
-  server.serveStatic("/", SPIFFS, "/setup/");
+  server.serveStatic("/", LittleFS, "/setup/");
 }
 
 void Fast::attachStationApi() {
@@ -377,7 +371,7 @@ void Fast::attachStationApi() {
       return;
     server.send(200);
     delay(100);
-    reset(false);
+    reset();
   });
 
   server.on("/wifi/change-ip", [this]() {
@@ -386,18 +380,18 @@ void Fast::attachStationApi() {
       return;
     IPAddress _local_ip, _subnetmask, _gateway;
     if (!_local_ip.fromString(server.arg("local_ip")) || !_subnetmask.fromString(server.arg("subnetmask")) || !_gateway.fromString(server.arg("gateway"))) {
-      return server.send(400, "text/palin", "Bad Request!");
+      return server.send(400, "text/plain", "Invalid Request");
     }
     WiFi.config(_local_ip, _gateway, _subnetmask);
     if (WiFi.localIP() != _local_ip) {
-      return server.send(500, "text/palin", "Couldn't change IP Address :(");
+      return server.send(500, "text/plain", "Couldn't change IP Address.");
     }
     is_static_ip = true;
     local_ip = _local_ip;
     subnetmask = _subnetmask;
     gateway = _gateway;
     save();
-    return server.send(200, "text/palin", "Changed IP Address to " + WiFi.localIP().toString());
+    return server.send(200, "text/plain", "Changed IP Address to " + WiFi.localIP().toString());
   });
 
   server.on("/settings", [this]() {
@@ -413,7 +407,7 @@ void Fast::attachStationApi() {
         if (root["www_auth_method"] != "digest" && root["www_auth_method"] != "basic") {
           return server.send(400, "text/plain", "Invalid Request");
         }
-        for (int i=0; i<ARRAY_LENGTH(HTTP_AUTH_METHOD_MAP); i++) {
+        for (size_t i=0; i<ARRAY_LENGTH(HTTP_AUTH_METHOD_MAP); i++) {
           if (root["www_auth_method"] == HTTP_AUTH_METHOD_MAP[i])
             www_auth_method = (HTTPAuthMethod)i;
         }
@@ -503,9 +497,9 @@ void Fast::attachStationApi() {
         break;
       case HTTP_GET:
         displayRequest();
-      server.send(200, "application/json", "{\"isOn\":" + String(BOOL_STR(beep.getisOn())) + "," +
-                                            "\"repeat\":" + String(BOOL_STR(beep.getRepeat())) + "," +
-                                            "\"interval\":" + String(beep.getInterval()) + "}");
+        server.send(200, "application/json", "{\"isOn\":" + String(BOOL_STR(beep.getisOn())) + "," +
+                                              "\"repeat\":" + String(BOOL_STR(beep.getRepeat())) + "," +
+                                              "\"interval\":" + String(beep.getInterval()) + "}");
         break;
       default:
         server.send(405, "text/plain", "Method Not Allowed");
@@ -520,5 +514,5 @@ void Fast::attachStationApi() {
     println_dbg("End");
   });
 
-  server.serveStatic("/console/", SPIFFS, "/main/");
+  server.serveStatic("/console/", LittleFS, "/main/");
 }

@@ -17,11 +17,10 @@
 */
 
 #include <ESP8266WiFi.h>
-#include <FS.h>
 #include "config.h"
 #include "fast.h"
 
-Fast fast(PIN_BEEP, PIN_LED_R, PIN_LED_G, PIN_LED_B);
+Fast fast(PIN_LED_R, PIN_LED_G, PIN_LED_B, PIN_BEEP);
 volatile bool reset_flag = false;
 unsigned int t=0;
 
@@ -30,9 +29,8 @@ void IRAM_ATTR RESET() {
 }
 
 void IRAM_ATTR OFF() {
-  if (millis()-t < 500 && millis()-t > 0){
+  if (millis()-t < 500 && millis()-t > 0)
     fast.indicatorOff();
-  }
   fast.beepOff();
   t=millis();
 }
@@ -42,8 +40,6 @@ void setup() {
   delay(10);
   println_dbg("");
   println_dbg("Hello, I'm ESP-WROOM-02");
-
-  SPIFFS.begin();
 
   fast.begin();
   pinMode(PIN_BUTTON, INPUT_PULLUP);
@@ -56,5 +52,6 @@ void setup() {
 
 void loop() {
   fast.handle();
-  if (reset_flag) fast.reset();
+  if (reset_flag)
+    fast.reset();
 }
