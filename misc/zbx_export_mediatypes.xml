@@ -1,0 +1,211 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<zabbix_export>
+    <version>4.4</version>
+    <date>2021-08-27T10:31:24Z</date>
+    <media_types>
+        <media_type>
+            <name>FAST Signal Beep</name>
+            <type>WEBHOOK</type>
+            <parameters>
+                <parameter>
+                    <name>event_value</name>
+                    <value>{EVENT.VALUE}</value>
+                </parameter>
+                <parameter>
+                    <name>nseverity</name>
+                    <value>{EVENT.NSEVERITY}</value>
+                </parameter>
+                <parameter>
+                    <name>url</name>
+                    <value>{ALERT.SENDTO}</value>
+                </parameter>
+            </parameters>
+            <script>try {&#13;
+  Zabbix.Log(127, 'FAST Signal Tower set triggered:'+value);&#13;
+ &#13;
+  var result = {&#13;
+    'tags': {&#13;
+      'endpoint': 'FAST Signal Tower Indicator'&#13;
+    }&#13;
+  };&#13;
+  var params = JSON.parse(value);&#13;
+  var req = new CurlHttpRequest();&#13;
+  var fields;&#13;
+  var resp;&#13;
+&#13;
+  if(parseInt(params.event_value) === 1){&#13;
+    switch(parseInt(params.nseverity)){&#13;
+      case 0:&#13;
+      case 1:&#13;
+      case 2:&#13;
+      case 3:&#13;
+      case 4:&#13;
+      case 5:&#13;
+        fields = {&#13;
+          &quot;isOn&quot;: true,&#13;
+          &quot;repeat&quot;: true,&#13;
+          &quot;interval&quot;: 500&#13;
+        }&#13;
+      break;&#13;
+      default:&#13;
+        fields = {&#13;
+          &quot;isOn&quot;: true,&#13;
+          &quot;repeat&quot;: true,&#13;
+          &quot;interval&quot;: 500&#13;
+        }&#13;
+    }&#13;
+  }else{&#13;
+    fields = {&#13;
+      &quot;isOn&quot;: false,&#13;
+      &quot;repeat&quot;: false,&#13;
+      &quot;interval&quot;: 500&#13;
+    }&#13;
+  }&#13;
+&#13;
+  req.AddHeader('Content-Type: application/json');&#13;
+ &#13;
+  resp = req.Put('http://'+params.url+'/beep',&#13;
+    JSON.stringify(fields)&#13;
+  );&#13;
+ &#13;
+  if (req.Status() != 200) {&#13;
+    throw 'Response code: '+req.Status();&#13;
+  }&#13;
+ &#13;
+  resp = JSON.parse(resp);&#13;
+} catch (error) {&#13;
+  Zabbix.Log(127, 'FAST Signal Tower set failed json : '+JSON.stringify(fields));&#13;
+  Zabbix.Log(127, 'FAST Signal Tower set failed : '+error);&#13;
+ &#13;
+    result = {'msg': 'error'};&#13;
+}&#13;
+ &#13;
+return JSON.stringify(result);</script>
+        </media_type>
+        <media_type>
+            <name>FAST Signal Indicator</name>
+            <type>WEBHOOK</type>
+            <parameters>
+                <parameter>
+                    <name>event_value</name>
+                    <value>{EVENT.VALUE}</value>
+                </parameter>
+                <parameter>
+                    <name>nseverity</name>
+                    <value>{EVENT.NSEVERITY}</value>
+                </parameter>
+                <parameter>
+                    <name>url</name>
+                    <value>{ALERT.SENDTO}</value>
+                </parameter>
+            </parameters>
+            <script>try {&#13;
+  Zabbix.Log(127, 'FAST Signal Tower set triggered:'+value);&#13;
+ &#13;
+  var result = {&#13;
+    'tags': {&#13;
+      'endpoint': 'FAST Signal Tower'&#13;
+    }&#13;
+  };&#13;
+  var params = JSON.parse(value);&#13;
+  var req = new CurlHttpRequest();&#13;
+  var fields;&#13;
+  var resp;&#13;
+&#13;
+  if(parseInt(params.event_value) === 1){&#13;
+    switch(parseInt(params.nseverity)){&#13;
+      case 0:&#13;
+        fields = {&#13;
+          &quot;red&quot;: 500,&#13;
+          &quot;green&quot;: 500,&#13;
+          &quot;blue&quot;: 500,&#13;
+          &quot;interval&quot;: 500,&#13;
+          &quot;flash&quot;: true&#13;
+        }&#13;
+      break;&#13;
+      case 1:&#13;
+        fields = {&#13;
+          &quot;red&quot;: 0,&#13;
+          &quot;green&quot;: 0,&#13;
+          &quot;blue&quot;: 1023,&#13;
+          &quot;interval&quot;: 500,&#13;
+          &quot;flash&quot;: true&#13;
+        }&#13;
+      break;&#13;
+      case 2:&#13;
+        fields = {&#13;
+          &quot;red&quot;: 1023,&#13;
+          &quot;green&quot;: 1023,&#13;
+          &quot;blue&quot;: 0,&#13;
+          &quot;interval&quot;: 500,&#13;
+          &quot;flash&quot;: true&#13;
+        }&#13;
+      break;&#13;
+      case 3:&#13;
+        fields = {&#13;
+          &quot;red&quot;: 1023,&#13;
+          &quot;green&quot;: 512,&#13;
+          &quot;blue&quot;: 0,&#13;
+          &quot;interval&quot;: 500,&#13;
+          &quot;flash&quot;: true&#13;
+        }&#13;
+      break;&#13;
+      case 4:&#13;
+        fields = {&#13;
+          &quot;red&quot;: 1023,&#13;
+          &quot;green&quot;: 128,&#13;
+          &quot;blue&quot;: 0,&#13;
+          &quot;interval&quot;: 500,&#13;
+          &quot;flash&quot;: true&#13;
+        }&#13;
+      break;&#13;
+      case 5:&#13;
+        fields = {&#13;
+          &quot;red&quot;: 1023,&#13;
+          &quot;green&quot;: 0,&#13;
+          &quot;blue&quot;: 0,&#13;
+          &quot;interval&quot;: 500,&#13;
+          &quot;flash&quot;: true&#13;
+        }&#13;
+      break;&#13;
+      default:&#13;
+        fields = {&#13;
+          &quot;red&quot;: 500,&#13;
+          &quot;green&quot;: 500,&#13;
+          &quot;blue&quot;: 500,&#13;
+          &quot;interval&quot;: 1000,&#13;
+          &quot;flash&quot;: true&#13;
+        }&#13;
+    }&#13;
+  }else{&#13;
+    fields = {&#13;
+      &quot;red&quot;: 0,&#13;
+      &quot;green&quot;: 0,&#13;
+      &quot;blue&quot;: 0,&#13;
+      &quot;interval&quot;: 1000,&#13;
+      &quot;flash&quot;: false&#13;
+    }&#13;
+  }&#13;
+&#13;
+  req.AddHeader('Content-Type: application/json');&#13;
+ &#13;
+  resp = req.Put('http://'+params.url+'/indicator',&#13;
+    JSON.stringify(fields)&#13;
+  );&#13;
+ &#13;
+  if (req.Status() != 200) {&#13;
+    throw 'Response code: '+req.Status();&#13;
+  }&#13;
+ &#13;
+  resp = JSON.parse(resp);&#13;
+} catch (error) {&#13;
+  Zabbix.Log(127, 'FAST Signal Tower set failed json : '+JSON.stringify(fields));&#13;
+  Zabbix.Log(127, 'FAST Signal Tower set failed : '+error);&#13;
+ &#13;
+    result = {'msg': 'error'};&#13;
+}&#13;
+ &#13;
+return JSON.stringify(result);</script>
+        </media_type>
+    </media_types>
+</zabbix_export>
