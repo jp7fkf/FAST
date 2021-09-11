@@ -116,7 +116,6 @@ void Fast::reset() {
 }
 
 void Fast::handle() {
-  yield();
   server.handleClient();
   ota.handle();
   switch (mode) {
@@ -137,6 +136,10 @@ void Fast::handle() {
           setupAP(SOFTAP_SSID, SOFTAP_PASS);
           indicator.setRgb(1023, 0, 0);
           beepOff();
+        }else{
+          WiFi.disconnect();
+          WiFi.begin(ssid.c_str(), password.c_str());
+          delay(5000);
         }
         lost = true;
       } else {
