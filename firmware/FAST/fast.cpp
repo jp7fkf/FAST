@@ -134,13 +134,12 @@ void Fast::handle() {
           WiFi.mode(WIFI_AP_STA);
           delay(1000);
           setupAP(SOFTAP_SSID, SOFTAP_PASS);
-          indicator.setRgb(1023, 0, 0);
+          indicator.setFlash(0, 0, 1023, 500);
           beepOff();
-        }else{
-          WiFi.disconnect();
-          WiFi.begin(ssid.c_str(), password.c_str());
-          delay(5000);
         }
+        WiFi.disconnect();
+        WiFi.begin(ssid.c_str(), password.c_str());
+        delay(500);
         lost = true;
       } else {
         if (lost == true) {
