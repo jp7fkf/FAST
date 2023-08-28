@@ -133,15 +133,9 @@ void Fast::handle() {
       if ((WiFi.status() != WL_CONNECTED)) {
         if (lost == false) {
           println_dbg("Lost WiFi: " + ssid);
-          WiFi.mode(WIFI_AP_STA);
-          // delay(1000);
-          setupAP(SOFTAP_SSID, SOFTAP_PASS);
           indicator.setFlash(0, 0, 1023, 500);
           beepOff();
         }
-        // WiFi.disconnect();
-        // WiFi.begin(ssid.c_str(), password.c_str());
-        // delay(500);
         lost = true;
       } else {
         if (lost == true) {
