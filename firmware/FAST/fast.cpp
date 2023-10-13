@@ -18,8 +18,8 @@
 #include "wpa.h"
 
 void Fast::begin() {
-  yield();
   wdt_reset();
+  yield();
   indicator.setFlash(0, 0, 1023, 500);
   LittleFS.begin();
   if (!restore())
@@ -116,6 +116,8 @@ void Fast::reset() {
 }
 
 void Fast::handle() {
+  wdt_reset();
+  yield();
   server.handleClient();
   ota.handle();
   switch (mode) {
@@ -131,10 +133,7 @@ void Fast::handle() {
       if ((WiFi.status() != WL_CONNECTED)) {
         if (lost == false) {
           println_dbg("Lost WiFi: " + ssid);
-          WiFi.mode(WIFI_AP_STA);
-          delay(1000);
-          setupAP(SOFTAP_SSID, SOFTAP_PASS);
-          indicator.setRgb(1023, 0, 0);
+          indicator.setFlash(0, 0, 1023, 500);
           beepOff();
         }
         lost = true;

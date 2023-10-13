@@ -22,9 +22,11 @@
 #include "beep.h"
 #include "ota.h"
 
-#define MODE_SETUP   0
-#define MODE_STATION 1
-#define MODE_AP      2
+enum OPERATION_MODE {
+  MODE_SETUP,
+  MODE_STATION,
+  MODE_AP,
+};
 
 #define STR(var)
 #define BOOL_STR(b) ((b) ? "true" :"false")
