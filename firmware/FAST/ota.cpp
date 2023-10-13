@@ -2,16 +2,27 @@
   The MIT License (MIT)
   Copyright (c)  2016  Ryotaro Onuki
 
-  Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
-  The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
-  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+  Permission is hereby granted, free of charge, to any person obtaining a copy
+  of this software and associated documentation files (the "Software"), to deal
+  in the Software without restriction, including without limitation the rights
+  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+  copies of the Software, and to permit persons to whom the Software is
+  furnished to do so, subject to the following conditions: The above copyright
+  notice and this permission notice shall be included in all copies or
+  substantial portions of the Software. THE SOFTWARE IS PROVIDED "AS IS",
+  WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO
+  THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+  NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE
+  FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+  TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR
+  THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
 #include "ota.h"
 
-#include <WiFiUdp.h>
-#include <ArduinoOTA.h>
 #include "config.h" // for print_dbg()
+#include <ArduinoOTA.h>
+#include <WiFiUdp.h>
 
 void OTA::begin(String hostname, String password, int port) {
   yield();
@@ -36,11 +47,16 @@ void OTA::begin(String hostname, String password, int port) {
   });
   ArduinoOTA.onError([](ota_error_t error) {
     printf_dbg("OTA Error[%u]: ", error);
-    if (error == OTA_AUTH_ERROR) println_dbg("Auth Failed");
-    else if (error == OTA_BEGIN_ERROR) println_dbg("Begin Failed");
-    else if (error == OTA_CONNECT_ERROR) println_dbg("Connect Failed");
-    else if (error == OTA_RECEIVE_ERROR) println_dbg("Receive Failed");
-    else if (error == OTA_END_ERROR) println_dbg("End Failed");
+    if (error == OTA_AUTH_ERROR)
+      println_dbg("Auth Failed");
+    else if (error == OTA_BEGIN_ERROR)
+      println_dbg("Begin Failed");
+    else if (error == OTA_CONNECT_ERROR)
+      println_dbg("Connect Failed");
+    else if (error == OTA_RECEIVE_ERROR)
+      println_dbg("Receive Failed");
+    else if (error == OTA_END_ERROR)
+      println_dbg("End Failed");
   });
   ArduinoOTA.begin();
   println_dbg("OTA Ready");
