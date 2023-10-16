@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8"/>
+  <title>FAST - Flexible Alerting Signal Tower</title>
+  <style type="text/css">
+    body {
+      background-color:#BBDDFF;
+      margin:auto;
+      max-width:960px;
+    }
+    #main {
+      width:  840px;
+      margin:  auto;
+    }
+    #indicator {
+      width: 400px;
+      padding: 10px;
+      margin: 10px auto;
+    }
+    #beep {
+      width: 400px;
+      padding: 10px;
+      margin: 10px auto;
+    }
+    #beep {
+      width: 400px;
+      padding: 10px;
+      margin: 10px auto;
+    }
+    #settings  {
+      width: 400px;
+      padding: 10px;
+      margin: 10px auto;
+    }
+    #info {
+      width: 400px;
+      padding: 10px;
+      margin: 10px auto;
+    }
+    .container{
+      float:left;
+      min-width:16em;
+      min-height:16em;
+    }
+    .container>div{
+      margin-left:15px;
+    }
+    .container>div>p{
+      margin:0.25em;
+    }
+    .form-group{
+      margin-top:5px;
+    }
+  </style>
+  <link rel="icon" type="image/png" href="/console/favicon.ico">
+  <link rel="apple-touch-icon" sizes="845x845" href="/console/apple-touch-icon.png">
+    <!--
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css" integrity="sha384-rHyoN1iRsVXV4nD0JutlnGaslCJuC7uwjduW9SVrLvRYooPp2bWYgmgJQIXwl/Sp" crossorigin="anonymous">
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+  -->
+</head>
+<body>
+  <h1 style="text-align:center" onclick="load()">FAST - Flexible Alerting Signal Tower</h1>
+
+  <div id="main" style="display:none">
+    <div class="container" style="text-align:center;">
+      <div id="indicator" class="container" style="text-align:left;">
+        <h2>Indicator</h2>
+        <div>
+          <p><label class="control-label col-sm-2">Red: <output id="indicator-red"></output></label></p>
+          <p><input type="range" value="0" min="0" max="1023" step="1" oninput="document.getElementById('indicator-red').value=this.value"></p>
+          <p><label class="control-label col-sm-2">Green: <output id="indicator-green"></output></label></p>
+          <p><input type="range" value="0" min="0" max="1023" step="1" oninput="document.getElementById('indicator-green').value=this.value"></p>
+          <p><label class="control-label col-sm-2">Blue: <output id="indicator-blue"></output></label></p>
+          <p><input type="range" value="0" min="0" max="1023" step="1" oninput="document.getElementById('indicator-blue').value=this.value"></p>
+          <p><label class="control-label col-sm-2">Flash Interval(ms): <output id="indicator-interval"></output></label></p>
+          <p><input type="range" value="20" min="20" max="5000" step="1" oninput="document.getElementById('indicator-interval').value=this.value"></p>
+        </div>
+        <div class="col-sm-2">
+          <input type="checkbox" id="indicator-flash" name="indicator-flash">
+          <label for="indicator-flash">Enable Flash</label><br>
+          <button name="indicator-submit" value="on">ON</button>
+          <button name="indicator-submit" value="off">OFF</button>
+        </div>
+      </div>
+
+      <div id="beep" class="container" style="text-align:left;">
+        <h2>Beep</h2>
+        <div>
+          <p><label class="control-label col-sm-2">Repeat Interval(ms): <output id="beep-interval"></output></label></p>
+          <p><input type="range" value="20" min="20" max="5000" step="1" oninput="document.getElementById('beep-interval').value=this.value"></p>
+        </div>
+        <div class="col-sm-2">
+          <input type="checkbox" id="beep-repeat" name="beep-repeat">
+          <label for="beep-repeat">Enable Repeat</label><br>
+          <button name="beep-submit" value="on">ON</button>
+          <button name="beep-submit" value="off">OFF</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="settings" class="container">
+      <h2>Settings</h2>
+      <div id="manage" class="form-horizontal">
+        <div class="form-group" id="form-action">
+          <label class="control-label col-sm-2">Action</label>
+          <div class="col-sm-4">
+            <select id="input-action" class="form-control" name="action">
+              <option value="change-ip">1. Change IP</option>
+              <option value="disconnect-wifi">2. Change WiFi</option>
+              <option value="settings">3. Settings</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group" id="form-ipaddress">
+          <label class="control-label col-sm-2">Static IP Address</label>
+          <div class="col-sm-4">
+            <input id="input-local_ip" type="text" name="local_ip">
+          </div>
+          <label class="control-label col-sm-2">Subnet Mask</label>
+          <div class="col-sm-4">
+            <input id="input-subnetmask" type="text" name="subnetmask">
+          </div>
+          <label class="control-label col-sm-2">Gateway IP address</label>
+          <div class="col-sm-4">
+            <input id="input-gateway" type="text" name="gateway">
+          </div>
+        </div>
+        <div class="form-group" id="form-settings" style="display:none">
+          <label class="control-label col-sm-2">Authentication Method</label>
+          <div class="col-sm-4">
+            <select id="input-www_auth_method" class="form-control" name="www_auth_method">
+              <option value="basic">1. Basic</option>
+              <option value="digest">2. Digest</option>
+            </select>
+          </div>
+          <label class="control-label col-sm-2">Username</label>
+          <div class="col-sm-4">
+            <input id="input-www_username" type="text" name="www_username">
+          </div>
+          <label class="control-label col-sm-2">Password</label>
+          <div class="col-sm-4">
+            <input id="input-www_password" type="password" name="www_password">
+          </div>
+        </div>
+        <div class="form-group" id="form-submit">
+          <label class="control-label col-sm-2" style="color:red;"></label>
+          <div class="col-sm-2">
+            <button>Submit</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="info" class="container">
+      <h2>Information</h2>
+      <div>
+        <p>Status: <span id="info-status"></span></p>
+        <p>Version: <span id="info-version"></span></p>
+        <p>Hostname: <span id="info-hostname"></span></p>
+        <p>WiFi SSID: <span id="info-ssid"></span></p>
+        <p>IP Address: <span id="info-local_ip"></span></p>
+      </div>
+    </div>
+
+    <div id="log" class="container">
+      <h2>Logs</h2>
+      <div id="log-area">
+      </div>
+    </div>
+  </div>
+    <!--
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+  -->
+  <script src="/console/jquery-2.2.3.min.js"></script>
+  <script src="/console/main.js"></script>
+</body>
+</html>
