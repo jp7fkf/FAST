@@ -532,7 +532,7 @@ void Fast::attachStationApi() {
         else
           beepOff();
       }
-      beep.setAuthOff(root["autoOffSecond"]);
+      beep.setAutoOff(root["autoOffSecond"]);
       server.send(200,
                   "application/json",
                   "{\"isOn\":" + String(BOOL_STR(beep.getisOn())) + "," +

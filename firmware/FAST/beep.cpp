@@ -61,7 +61,7 @@ void Beep::repeat() {
   }
 }
 
-void Beep::setAutoOff(auto_off_second) {
+void Beep::setAutoOff(int auto_off_second) {
   if (auto_off_second < 1){
     tick_auto_off.detach();
     _auto_off_second = 0;

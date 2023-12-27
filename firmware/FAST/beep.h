@@ -39,7 +39,7 @@ public:
   void unset();
   void setRepeat(int interval);
   void off();
-  void setAutoOff();
+  void setAutoOff(int auto_off_second);
 
   int getInterval() {
     return _interval;
@@ -61,6 +61,7 @@ private:
   Ticker tick_auto_off;
   int _pin_beep;
   int _interval;
+  int _auto_off_second;
   bool _is_on;
   bool _repeat;
   bool _repeat_state;

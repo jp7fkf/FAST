@@ -44,7 +44,7 @@ public:
   void setBlue(int value);
   void off();
   void setFlash(int val_red, int val_green, int val_blue, int interval_ms);
-  void setAuthOff();
+  void setAuthOff(int auto_off_second);
 
   int getRed() {
     return _val_red;
@@ -64,7 +64,7 @@ public:
   bool getFlash() {
     return _flash;
   };
-  bool getAutoOff() {
+  int getAutoOff() {
     return _auto_off_second;
   };
 
@@ -82,6 +82,7 @@ private:
   int _val_green;
   int _val_blue;
   int _interval_ms;
+  int _auto_off_second;
 
   bool _flash;
   bool _flash_state;

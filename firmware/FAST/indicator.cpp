@@ -91,7 +91,7 @@ void Indicator::flash() {
   }
 }
 
-void Indicator::setAuthOff(auto_off_second) {
+void Indicator::setAuthOff(int auto_off_second) {
   if (auto_off_second < 1){
     tick_auto_off.detach();
     _auto_off_second = 0;
