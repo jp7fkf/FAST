@@ -22,13 +22,13 @@
 #include "indicator.h"
 #include "config.h"
 
-void Indicator::setRgb(int val_red, int val_green, int val_blue) {
-  setRed(val_red);
-  setGreen(val_green);
-  setBlue(val_blue);
+void Indicator::setRgb(int val_red, int val_green, int val_blue, bool save) {
+  setRed(val_red, save);
+  setGreen(val_green, save);
+  setBlue(val_blue, save);
 }
 
-void Indicator::setRed(int value) {
+void Indicator::setRed(int value, bool save) {
   if (value > 1023)
     value = 1023;
   if (value < 0)
@@ -37,7 +37,7 @@ void Indicator::setRed(int value) {
   analogWrite(_pin_red, _val_red);
 }
 
-void Indicator::setGreen(int value) {
+void Indicator::setGreen(int value, bool save) {
   if (value > 1023)
     value = 1023;
   if (value < 0)
@@ -46,7 +46,7 @@ void Indicator::setGreen(int value) {
   analogWrite(_pin_green, _val_green);
 }
 
-void Indicator::setBlue(int value) {
+void Indicator::setBlue(int value, bool save) {
   if (value > 1023)
     value = 1023;
   if (value < 0)
@@ -55,7 +55,7 @@ void Indicator::setBlue(int value) {
   analogWrite(_pin_blue, _val_blue);
 }
 
-void Indicator::off() {
+void Indicator::off(bool save) {
   tick_flash.detach();
   tick_auto_off.detach();
   _auto_off_second = 0;
@@ -66,14 +66,17 @@ void Indicator::off() {
 void Indicator::setFlash(int val_red,
                          int val_green,
                          int val_blue,
-                         int interval_ms) {
+                         int interval_ms,
+                         bool save) {
   setRgb(val_red, val_green, val_blue);
   if (interval_ms > 5000)
     interval_ms = 5000;
   if (interval_ms < 20)
     interval_ms = 20;
-  _interval_ms = interval_ms;
-  _flash = true;
+  if (save){
+    _interval_ms = interval_ms;
+    _flash = true;
+  }
   tick_flash.attach_ms(_interval_ms, [this]() {
     this->flash();
   });
@@ -91,7 +94,7 @@ void Indicator::flash() {
   }
 }
 
-void Indicator::setAuthOff(int auto_off_second) {
+void Indicator::setAuthOff(int auto_off_second, bool save) {
   if (auto_off_second < 1){
     tick_auto_off.detach();
     _auto_off_second = 0;
@@ -104,3 +107,14 @@ void Indicator::setAuthOff(int auto_off_second) {
     this->off();
   });
 }
+
+// void Indicator::override(int val_red,
+//                          int val_green,
+//                          int val_blue,
+//                          bool flash,
+//                          int interval_ms
+//                          int auto_off_second) {
+// }
+
+// void Indicator::reload() {
+// }

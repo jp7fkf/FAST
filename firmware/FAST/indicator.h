@@ -38,13 +38,13 @@ public:
     _auto_off_second = 0;
   }
 
-  void setRgb(int val_red, int val_green, int val_blue);
-  void setRed(int value);
-  void setGreen(int value);
-  void setBlue(int value);
-  void off();
-  void setFlash(int val_red, int val_green, int val_blue, int interval_ms);
-  void setAuthOff(int auto_off_second);
+  void setRgb(int val_red, int val_green, int val_blue, bool save=true);
+  void setRed(int value, bool save=true);
+  void setGreen(int value, bool save=true);
+  void setBlue(int value, bool save=true);
+  void off(bool save=true);
+  void setFlash(int val_red, int val_green, int val_blue, int interval_ms, bool save=true);
+  void setAuthOff(int auto_off_second, bool save=true);
 
   int getRed() {
     return _val_red;
