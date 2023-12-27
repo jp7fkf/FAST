@@ -32,12 +32,14 @@ public:
     _is_on = false;
     _repeat = false;
     _repeat_state = false;
+    _auto_off_second = 0;
   }
 
   void set();
   void unset();
   void setRepeat(int interval);
   void off();
+  void setAutoOff();
 
   int getInterval() {
     return _interval;
@@ -48,11 +50,15 @@ public:
   bool getRepeat() {
     return _repeat;
   };
+  int getAutoOff() {
+    return _auto_off_second;
+  };
 
 private:
   void repeat();
 
-  Ticker tick;
+  Ticker tick_repeat;
+  Ticker tick_auto_off;
   int _pin_beep;
   int _interval;
   bool _is_on;

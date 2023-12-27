@@ -39,13 +39,14 @@ void Beep::setRepeat(int interval) {
   _interval = interval;
   _is_on = true;
   _repeat = true;
-  tick.attach_ms(_interval, [this]() {
+  tick_repeat.attach_ms(_interval, [this]() {
     this->repeat();
   });
 }
 
 void Beep::off() {
-  tick.detach();
+  tick_repeat.detach();
+  tick_auto_off.detach();
   _repeat = false;
   unset();
 }
@@ -58,4 +59,18 @@ void Beep::repeat() {
     set();
     _repeat_state = true;
   }
+}
+
+void Beep::setAutoOff(auto_off_second) {
+  if (auto_off_second < 1){
+    tick_auto_off.detach();
+    _auto_off_second = 0;
+    return;
+  }
+  if (auto_off_second > 3600)
+    auto_off_second = 3600;
+  _auto_off_second = auto_off_second;
+  tick_auto_off.once(_auto_off_second, [this]() {
+    this->off();
+  });
 }
