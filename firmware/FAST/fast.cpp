@@ -484,6 +484,8 @@ void Fast::attachStationApi() {
       } else {
         indicator.setRgb(root["red"], root["green"], root["blue"]);
       }
+      if (root["autoOffSecond"] > 0)
+        indicator.setAuthOff(root["autoOffSecond"]);
       server.send(200,
                   "application/json",
                   "{\"red\":" + String(indicator.getRed()) + "," +

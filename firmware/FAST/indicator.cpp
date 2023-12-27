@@ -56,7 +56,9 @@ void Indicator::setBlue(int value) {
 }
 
 void Indicator::off() {
-  tick.detach();
+  tick_flash.detach();
+  tick_auto_off.detach();
+  _auto_off_second = 0;
   _flash = false;
   setRgb(0, 0, 0);
 }
@@ -64,15 +66,15 @@ void Indicator::off() {
 void Indicator::setFlash(int val_red,
                          int val_green,
                          int val_blue,
-                         int interval) {
+                         int interval_ms) {
   setRgb(val_red, val_green, val_blue);
-  if (interval > 5000)
-    interval = 5000;
-  if (interval < 20)
-    interval = 20;
-  _interval = interval;
+  if (interval_ms > 5000)
+    interval_ms = 5000;
+  if (interval_ms < 20)
+    interval_ms = 20;
+  _interval_ms = interval_ms;
   _flash = true;
-  tick.attach_ms(_interval, [this]() {
+  tick_flash.attach_ms(_interval_ms, [this]() {
     this->flash();
   });
 }
@@ -87,4 +89,18 @@ void Indicator::flash() {
     setRgb(_val_red, _val_green, _val_blue);
     _flash_state = true;
   }
+}
+
+void Indicator::setAuthOff(auto_off_second) {
+  if (auto_off_second < 1){
+    tick_auto_off.detach();
+    _auto_off_second = 0;
+    return;
+  }
+  if (auto_off_second > 3600)
+    auto_off_second = 3600;
+  _auto_off_second = auto_off_second;
+  tick_auto_off.once(_auto_off_second, [this]() {
+    this->off();
+  });
 }

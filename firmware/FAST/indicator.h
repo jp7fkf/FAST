@@ -35,6 +35,7 @@ public:
     setRgb(0, 0, 0);
     _flash = false;
     _flash_state = false;
+    _auto_off_second = 0;
   }
 
   void setRgb(int val_red, int val_green, int val_blue);
@@ -42,7 +43,8 @@ public:
   void setGreen(int value);
   void setBlue(int value);
   void off();
-  void setFlash(int val_red, int val_green, int val_blue, int interval);
+  void setFlash(int val_red, int val_green, int val_blue, int interval_ms);
+  void setAuthOff();
 
   int getRed() {
     return _val_red;
@@ -54,7 +56,7 @@ public:
     return _val_blue;
   };
   int getInterval() {
-    return _interval;
+    return _interval_ms;
   };
   bool isOn() {
     return _val_red > 0 || _val_green > 0 || _val_blue > 0;
@@ -62,11 +64,15 @@ public:
   bool getFlash() {
     return _flash;
   };
+  bool getAutoOff() {
+    return _auto_off_second;
+  };
 
 private:
   void flash();
 
-  Ticker tick;
+  Ticker tick_flash;
+  Ticker tick_auto_off;
 
   int _pin_red;
   int _pin_green;
@@ -75,7 +81,7 @@ private:
   int _val_red;
   int _val_green;
   int _val_blue;
-  int _interval;
+  int _interval_ms;
 
   bool _flash;
   bool _flash_state;
